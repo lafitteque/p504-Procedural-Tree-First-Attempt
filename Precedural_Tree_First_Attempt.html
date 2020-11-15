@@ -1,0 +1,119 @@
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.1.9/lib/p5.js"></script>
+    <script src="sketch.js"></script>
+    <script>
+
+// Summary: 
+// I tried to describe a tree as a fractal tree but with probabilities of branches and angles depending on the position of the branches on the tree.
+// In fact, the closer to the ground, the harder it will be for a branch to appear and the higher the branches get, the shorter they will get as well
+
+var sceenSize = 400;
+var offsetSides = sceenSize * 0.45
+var groundHeight = sceenSize / 5
+var offsetBuried = 0
+var branchDensity = 0.07
+var bottomDensityAlpha = 0.005
+var topDensityAlpha = 0.1
+var maxAngle = 3.1415 / 7
+var branchAngle = 3.1415 * 0.7
+
+
+class Tree {
+
+  constructor()
+  {
+    this.x = Math.random()*(sceenSize-2*offsetSides) + offsetSides;
+    this.liste_rayons = [50+ Math.random()*20-10];
+    this.treeX = new Array(0)
+    this.treeY = new Array(0)
+  }
+  
+  branch(angle, l, x, y, n){
+
+    // The first branch always has an angle of PI/2
+    if (n == 0) {angle = PI/2}
+
+
+    var c = cos(angle)
+    var s = sin(angle)
+
+    // for each cell of the branch we check if a new branch appears (depending on the proobability represented by randomValue)
+    for (var i = 1 ; i<l ; i++){
+      var x_temp = Math.floor(x + i*c)
+      var y_temp = Math.floor(y + i*s)
+      this.treeX.push(x_temp)
+      this.treeY.push(y_temp)
+      this.draw(x_temp,y_temp,n)
+      var randomValue = branchDensity               // Global density
+                          * ( 1 - exp(-bottomDensityAlpha*( i ) ))   // the less high, the less probable
+                          * ( 1 - exp(topDensityAlpha*( i - l - Math.log(2))) )  // the higher, the less probable  
+
+      // If the criterion is fulfilled, we create a new branch
+
+      // We could set the sign of newAngle as random in order to do only one if but we would also need to change the parameters
+
+      // On the right
+      if(n<2 && Math.random() < randomValue)
+      { 
+        var newAngle =  ( -1*(Math.random()>0.5) ) 
+                            * ( Math.random()*maxAngle/(n+1)/(n+1) 
+                                - maxAngle/2/(n+1)/(n+1) 
+                                + branchAngle/(n+1)/(n+1)
+                              ) 
+        this.branch(angle+newAngle*(1-exp((i-l+Math.log(2)-1)/100)),
+                    l-i,
+                    x_temp,
+                    y_temp,
+                    n+1)
+      }
+      
+      
+      // On the left  
+      if(n<2 && Math.random() < randomValue)
+      { 
+        var newAngle =  ( -1*(Math.random()>0.5) ) 
+                            * ( Math.random()*maxAngle/(n+1)/(n+1) 
+                                - maxAngle/2/(n+1)/(n+1) 
+                                + branchAngle/(n+1)/(n+1)
+                              ) 
+        this.branch(angle-newAngle*(1-exp((i-l+Math.log(2)-1)/50)),
+                    l-i,
+                    x_temp,
+                    y_temp,
+                    n+1)
+      }  
+    }
+  }
+  
+  // we draw a circle for each "cell" of our tree. The size of each cell depends on the height and the distance to the trunk
+  draw(x,y,n){
+      push()
+      noStroke()
+      fill(200,100,20)
+      translate(x,sceenSize-y)
+      var r = 50 /(n+1)/(10+ dist(this.treeX[0], groundHeight,x,y)/(sceenSize-groundHeight-100) );
+      ellipse(0,0,r,r)
+      pop()   
+  }
+
+}
+
+
+
+function setup() {
+  createCanvas(sceenSize, sceenSize);
+  background(50,150,255);
+  var myTree = new Tree()
+  DrawGroung()
+  myTree.branch(branchAngle,sceenSize-groundHeight-100 , myTree.x,groundHeight,0)
+}
+
+
+function DrawGroung(){
+  push()
+  noStroke()
+  fill(100,50,0)
+  rect(0,sceenSize-groundHeight,sceenSize,sceenSize)
+  pop()
+}
+
+</script>
